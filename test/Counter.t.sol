@@ -2,23 +2,34 @@
 pragma solidity 0.8.18;
 
 import "forge-std/Test.sol";
-import "../src/Counter.sol";
+import {Initializable} from "openzeppelin/proxy/utils/Initializable.sol";
+
+contract Counter is Initializable {
+    uint256 public counter;
+
+    constructor() initializer {}
+
+    function increment() external initializer {
+        ++counter;
+    }
+}
 
 contract CounterTest is Test {
-    Counter public counter;
+    Counter private immutable counter;
 
-    function setUp() public {
+    constructor() {
         counter = new Counter();
-        counter.setNumber(0);
     }
 
-    function testIncrement() public {
+    function testCannotIncrementAlreadyInitialized() external {
+        vm.expectRevert(
+            bytes("Initializable: contract is already initialized")
+        );
+
+        // Reverts because due to the `initializer` modifier in the constructor
         counter.increment();
-        assertEq(counter.number(), 1);
-    }
 
-    function testSetNumber(uint256 x) public {
-        counter.setNumber(x);
-        assertEq(counter.number(), x);
+        // Should remain 0 since `increment` can only be called if initializing contract
+        assertEq(0, counter.counter());
     }
 }
